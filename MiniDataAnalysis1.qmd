@@ -173,8 +173,9 @@ Write your research questions **as questions**, and be specific. You can change 
 
 <!-------------------------- Start your work below ---------------------------->
 
-(Primary)Does Spotify popularity correspond at all to gender?
-(Secondary)Is there a drastic difference of that popularity from 2002 to 2020
+(Primary)Does Spotify popularity average for men exceed women? Does popularity
+correspond at all to gender?
+(Secondary)Is there a drastic difference of that popularity from 2002 to 2020?
 
 
 
@@ -203,6 +204,21 @@ Your task is to create a table that calculates the proportion of missing values 
 ```{r}
 ### Explore missingness here ###
 
+
+music_mean <- music|>
+  mutate(is_na_03 = if_else(is.na(`2003 Rank`) == TRUE, 1,0),
+         is_na_12 = if_else(is.na(`2003 Rank`) == TRUE, 1,0),
+         is_na_20 = if_else(is.na(`2003 Rank`) == TRUE, 1,0)) |>
+  summarise(
+    is_na_03 = mean(is_na_03),
+    is_na_12 = mean(is_na_12),
+    is_na_20 = mean(is_na_20)) |>
+  pivot_longer(cols = c(is_na_03, is_na_12, is_na_20),
+               names_to = "Column Name",
+               values_to = "Mean_NA")
+
+#just using the yearly ranking, showing their proportion of NAs
+
 ```
 
 
@@ -226,7 +242,10 @@ If missingness is not an issue, describe why.
 
 <!-------------------------- Start your work below ---------------------------->
 
-
+The Spotify popularity and gender column technically have no NA in their data set,
+however, there are some albums (around 20%) that are not actually on Spotify (they are simply
+listed as "Not on Spotify" instead of NA) which could pose an issue when comparing
+album's popularity.
 
 
 <!----------------------------------------------------------------------------->
@@ -253,7 +272,14 @@ Show the first 6 rows of the tidied data.
 <!-------------------------- Start your work below ---------------------------->
 ```{r}
 
-
+music |>
+  rename(gender = `Artist Gender`, pop = `Spotify Popularity`) |> #renaming for easier access 
+  mutate(pop = as.numeric(pop)) |> #making the popularity a number and not character, so we can calculate the mean
+  select(`Clean Name`, pop, gender) |> #choosing to make our table only contain the names, popularity, and gender
+  filter(gender == "Male" | gender == "Female") |> #we don't want the male/female category
+  group_by(gender) |>
+  summarise(mean_pop = mean(pop, na.rm=TRUE)) #calculating the mean for both genders
+  
 
 
 ```
@@ -270,7 +296,11 @@ Show the outputted table.
 <!-------------------------- Start your work below ---------------------------->
 ```{r}
 
-
+music |>
+  summarise(across(where(is.numeric), mean, na.rm=TRUE),
+            across(where(is.numeric), max, na.rm=TRUE),
+            across(where(is.numeric), min, na.rm=TRUE)
+          )
 
 
 ```
@@ -337,7 +367,13 @@ Here is an example of a specific, explicit debug:
 Generative AI (through [LIST MODELS USED, i.e. ChatGPT, CoPilot)] was used to
 help me complete  this assignment in the following ways.
 
-1. [Describe here]
+1. [I was unsure how to only find the mean, max, and min for all of the NUMERIC colums. At first I had :
+music |>
+  summarise(across(everything(is.int), mean, na.rm=TRUE),
+            across(everything(is.int), max, na.rm=TRUE),
+            across(everything(is.int), min, na.rm=TRUE)
+          )
+This gave me an error because I was not converting the valus correctly, chat told me I can use where(is.numeric) to find only numereic values]
 
 2. [Describe here]
 
